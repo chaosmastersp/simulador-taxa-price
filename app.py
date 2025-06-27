@@ -69,58 +69,56 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
         st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.5f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:.2f}**")
 
-        # Novo cenário alternativo com mesmo total pago e prazo diferente
-        prazo_original = melhor_resultado["prazo"]
-        total_desejado = melhor_resultado["total_pago"]
-        
-        # Sempre calcular e exibir o cenário 2
-        encontrou_cenario2 = False
+    # Sempre calcular e exibir o cenário 2
+    prazo_original = melhor_resultado["prazo"] if melhor_resultado else 1  # Usar 1 se não houver melhor resultado
+    total_desejado = melhor_resultado["total_pago"] if melhor_resultado else saldo_devedor_total  # Usar saldo_devedor_total se não houver melhor resultado
+    encontrou_cenario2 = False
 
-        for novo_prazo in range(prazo_original + 1, 97):
-            datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
-            taxa_alt = 0.01
+    for novo_prazo in range(prazo_original + 1, 97):
+        datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
+        taxa_alt = 0.01
+        for _ in range(100):
+            fator = sum(1 / (1 + taxa_alt) ** ((d - data_lib).days / 30) for d in datas_alt)
+            pmt_alt = total_desejado / fator
+            total_teste = pmt_alt * novo_prazo
+            erro = total_teste - total_desejado
+            if abs(erro) < 0.01:
+                encontrou_cenario2 = True
+                break
+            fator2 = sum(1 / (1 + taxa_alt + 0.00001) ** ((d - data_lib).days / 30) for d in datas_alt)
+            pmt2 = total_desejado / fator2
+            derivada = (pmt2 - pmt_alt) / 0.00001
+            taxa_alt = taxa_alt - erro / (derivada * novo_prazo)
+            if taxa_alt < 0 or taxa_alt > taxa_limite:
+                break
+
+    if encontrou_cenario2:
+        # Recalcula a taxa com base na parcela obtida
+        def encontrar_taxa_via_bissecao(pmt_desejada, saldo, datas, data_lib):
+            low, high = 0.00001, taxa_max
             for _ in range(100):
-                fator = sum(1 / (1 + taxa_alt) ** ((d - data_lib).days / 30) for d in datas_alt)
-                pmt_alt = total_desejado / fator
-                total_teste = pmt_alt * novo_prazo
-                erro = total_teste - total_desejado
-                if abs(erro) < 0.01:
-                    encontrou_cenario2 = True
-                    break
-                fator2 = sum(1 / (1 + taxa_alt + 0.00001) ** ((d - data_lib).days / 30) for d in datas_alt)
-                pmt2 = total_desejado / fator2
-                derivada = (pmt2 - pmt_alt) / 0.00001
-                taxa_alt = taxa_alt - erro / (derivada * novo_prazo)
-                if taxa_alt < 0 or taxa_alt > taxa_limite:
-                    break
+                mid = (low + high) / 2
+                pmt = calcula_pmt(mid, saldo, datas, data_lib)
+                if abs(pmt - pmt_desejada) < 0.01:
+                    return mid
+                if pmt > pmt_desejada:
+                    low = mid
+                else:
+                    high = mid
+            return mid
 
-        if encontrou_cenario2:
-            # Recalcula a taxa com base na parcela obtida
-            def encontrar_taxa_via_bissecao(pmt_desejada, saldo, datas, data_lib):
-                low, high = 0.00001, taxa_max
-                for _ in range(100):
-                    mid = (low + high) / 2
-                    pmt = calcula_pmt(mid, saldo, datas, data_lib)
-                    if abs(pmt - pmt_desejada) < 0.01:
-                        return mid
-                    if pmt > pmt_desejada:
-                        low = mid
-                    else:
-                        high = mid
-                return mid
+        taxa_real = encontrar_taxa_via_bissecao(pmt_alt, saldo, datas_alt, data_lib)
+        taxa_real = round(taxa_real, 5)
+        pmt_alt = round(pmt_alt, 2)
+        total_desejado = round(total_desejado, 2)
 
-            taxa_real = encontrar_taxa_via_bissecao(pmt_alt, saldo, datas_alt, data_lib)
-            taxa_real = round(taxa_real, 5)
-            pmt_alt = round(pmt_alt, 2)
-            total_desejado = round(total_desejado, 2)
-
-            st.markdown("---")
-            st.success("📌 Cenário Alternativo Encontrado:")
-            st.info(f"📅 Prazo: **{novo_prazo} meses**")
-            st.info(f"💰 Parcela: **R$ {pmt_alt:.2f}**")
-            st.info(f"📉 Taxa de Juros: **{taxa_real * 100:.5f}% ao mês**")
-            st.info(f"📦 Total Pago: **R$ {total_desejado:.2f}**")
-        else:
-            st.warning("⚠️ Não foi possível calcular um cenário alternativo com mesmo total pago.")
+        st.markdown("---")
+        st.success("📌 Cenário Alternativo Encontrado:")
+        st.info(f"📅 Prazo: **{novo_prazo} meses**")
+        st.info(f"💰 Parcela: **R$ {pmt_alt:.2f}**")
+        st.info(f"📉 Taxa de Juros: **{taxa_real * 100:.5f}% ao mês**")
+        st.info(f"📦 Total Pago: **R$ {total_desejado:.2f}**")
+    else:
+        st.warning("⚠️ Não foi possível calcular um cenário alternativo com mesmo total pago.")
 
 
