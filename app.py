@@ -69,59 +69,45 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
         st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.5f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:.2f}**")
 
-    # Sempre calcular e exibir o cenário 2
+    # Sempre calcular e exibir o cenário 2 com validação precisa da taxa e parcela
     encontrou_cenario2 = False
 
-    for novo_prazo in range(1, 97):  # de 1 até 96 meses
+    def total_pago_por_taxa(taxa, saldo, datas, data_lib):
+        fator = sum(1 / (1 + taxa) ** ((d - data_lib).days / 30) for d in datas)
+        pmt = saldo / fator
+        return pmt, pmt * len(datas)
+
+    for novo_prazo in range(1, 97):
         datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
-        taxa_alt = 0.01
+        low, high = 0.0001, taxa_max
         for _ in range(100):
-            fator = sum(1 / (1 + taxa_alt) ** ((d - data_lib).days / 30) for d in datas_alt)
-            pmt_alt = saldo / fator
-            total_teste = pmt_alt * novo_prazo
-            erro = total_teste - saldo_devedor_total
-            if (
-                abs(erro) <= 1.00
-                and total_teste <= saldo_devedor_total
-                and pmt_alt <= pmt_alvo
-            ):
+            mid = (low + high) / 2
+            pmt_mid, total_mid = total_pago_por_taxa(mid, saldo, datas_alt, data_lib)
+            if abs(total_mid - saldo_devedor_total) <= 1.00 and pmt_mid <= pmt_alvo:
                 encontrou_cenario2 = True
+                taxa_real = mid
                 break
-            fator2 = sum(1 / (1 + taxa_alt + 0.00001) ** ((d - data_lib).days / 30) for d in datas_alt)
-            pmt2 = saldo / fator2
-            derivada = (pmt2 - pmt_alt) / 0.00001
-            taxa_alt = taxa_alt - erro / (derivada * novo_prazo)
-            if taxa_alt < 0.00001 or taxa_alt > taxa_max:
-                break
+            if total_mid > saldo_devedor_total or pmt_mid > pmt_alvo:
+                high = mid
+            else:
+                low = mid
 
         if encontrou_cenario2:
-            def encontrar_taxa_via_bissecao(pmt_desejada, saldo, datas, data_lib):
-                low, high = 0.00001, taxa_max
-                for _ in range(100):
-                    mid = (low + high) / 2
-                    pmt = calcula_pmt(mid, saldo, datas, data_lib)
-                    if abs(pmt - pmt_desejada) < 0.01:
-                        return mid
-                    if pmt > pmt_desejada:
-                        low = mid
-                    else:
-                        high = mid
-                return mid
-
-            taxa_real = encontrar_taxa_via_bissecao(pmt_alt, saldo, datas_alt, data_lib)
+            pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
             taxa_real = round(taxa_real, 5)
-            pmt_alt = round(pmt_alt, 2)
-            total_teste = round(total_teste, 2)
+            pmt_final = round(pmt_final, 2)
+            total_final = round(total_final, 2)
 
             st.markdown("---")
             st.success("📌 Cenário Alternativo Encontrado:")
             st.info(f"📅 Prazo: **{novo_prazo} meses**")
-            st.info(f"💰 Parcela: **R$ {pmt_alt:.2f}**")
+            st.info(f"💰 Parcela: **R$ {pmt_final:.2f}**")
             st.info(f"📉 Taxa de Juros: **{taxa_real * 100:.5f}% ao mês**")
-            st.info(f"📦 Total Pago: **R$ {total_teste:.2f}**")
+            st.info(f"📦 Total Pago: **R$ {total_final:.2f}**")
             break
+
     else:
-        st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago igual ou inferior ao saldo estimado e parcela menor ou igual à desejada.")
+        st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
 
 
 
