@@ -113,7 +113,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             pmt_alt = round(pmt_alt, 2)
             total_desejado = round(total_desejado, 2)
 
-                break
+            break
 
         if encontrou_cenario2:
             # Recalcula a taxa com base na parcela obtida
@@ -143,5 +143,4 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             st.info(f"📦 Total Pago: **R$ {total_desejado:.2f}**")
         else:
             st.warning("⚠️ Não foi possível calcular um cenário alternativo com mesmo total pago.")
-
 
