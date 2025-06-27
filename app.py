@@ -83,7 +83,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 pmt_alt = total_desejado / fator
                 total_teste = pmt_alt * novo_prazo
                 erro = total_teste - total_desejado
-                if abs(erro) < 0.01:
+                if abs(erro) < 1.00:
                     encontrou_cenario2 = True
                     break
                 fator2 = sum(1 / (1 + taxa_alt + 0.00001) ** ((d - data_lib).days / 30) for d in datas_alt)
