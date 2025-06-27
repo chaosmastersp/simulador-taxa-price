@@ -111,4 +111,3 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
 
 
-
