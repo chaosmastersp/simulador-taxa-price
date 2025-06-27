@@ -93,8 +93,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 if taxa_alt < 0 or taxa_alt > taxa_limite:
                     break
 
-            
-        if encontrou_cenario2:
+            if encontrou_cenario2:
             # Recalcula a taxa com base na parcela obtida
             def encontrar_taxa_via_bissecao(pmt_desejada, saldo, datas, data_lib):
                 low, high = 0.00001, taxa_max
@@ -116,7 +115,6 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
                 break
 
-        
         if encontrou_cenario2:
             # Recalcula a taxa com base na parcela obtida
             def encontrar_taxa_via_bissecao(pmt_desejada, saldo, datas, data_lib):
