@@ -65,9 +65,9 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
     if melhor_resultado:
         st.success("✅ Melhor Resultado Encontrado:")
         st.info(f"📅 Prazo: **{melhor_resultado['prazo']} meses**")
-        st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:.2f}**")
-        st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.5f}% ao mês**")
-        st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:.2f}**")
+        st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.4f}% ao mês**")
+        st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
 
     # Sempre calcular e exibir o cenário 2 com validação precisa da taxa e parcela
     encontrou_cenario2 = False
