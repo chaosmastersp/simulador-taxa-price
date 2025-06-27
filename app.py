@@ -65,9 +65,9 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
     if melhor_resultado:
         st.success("✅ Melhor Resultado Encontrado:")
         st.info(f"📅 Prazo: **{melhor_resultado['prazo']} meses**")
-        st.info(f"💰 Parcela: **R$ {pmt_final:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:.2f}**")
         st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.5f}% ao mês**")
-        st.info(f"📦 Total Pago: **R$ {total_final:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:.2f}**")
 
     # Sempre calcular e exibir o cenário 2 com validação precisa da taxa e parcela
     encontrou_cenario2 = False
@@ -98,12 +98,17 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             pmt_final = round(pmt_final, 2)
             total_final = round(total_final, 2)
 
+            
+            pmt_formatada = f"R$ {pmt_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            total_formatado = f"R$ {total_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            taxa_formatada = f"{taxa_real * 100:.4f}%"
+
             st.markdown("---")
             st.success("📌 Cenário Alternativo Encontrado:")
             st.info(f"📅 Prazo: **{novo_prazo} meses**")
-            st.info(f"💰 Parcela: **R$ {pmt_final:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-            st.info(f"📉 Taxa de Juros: **{taxa_real * 100:.5f}% ao mês**")
-            st.info(f"📦 Total Pago: **R$ {total_final:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.info(f"💰 Parcela: **{pmt_formatada}**")
+            st.info(f"📉 Taxa de Juros: **{taxa_formatada} ao mês**")
+            st.info(f"📦 Total Pago: **{total_formatado}**")
             break
 
     else:
