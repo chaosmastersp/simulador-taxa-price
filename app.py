@@ -3,7 +3,7 @@ import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-# Autenticação
+# Autenticação simples
 senha = st.text_input("🔐 Digite a senha para acessar:", type="password")
 if senha != "simulador2025":
     st.warning("Acesso restrito.")
@@ -12,24 +12,29 @@ if senha != "simulador2025":
 st.set_page_config(page_title="Simulador de Taxa - Tabela Price", layout="centered")
 st.title("📊 Simulador de Taxa para Parcela Desejada")
 
+# Entradas do usuário
 saldo = st.number_input("💰 Valor do Saldo Devedor (R$)", min_value=0.0, value=0.0, step=100.0, format="%.2f")
 pmt_alvo = st.number_input("📦 Valor da Parcela Desejada (R$)", min_value=0.01, value=0.01, step=10.0, format="%.2f")
 parcela_atual = st.number_input("💳 Parcela Atual (R$)", min_value=0.01, value=100.0, step=10.0, format="%.2f")
 prazo_inicial = st.number_input("📆 Prazo (nº de parcelas)", min_value=1, max_value=96, value=1)
-taxa_max = st.number_input("📉 Taxa de Juros Máxima Permitida (% ao mês)", min_value=0.01, value=2.0, step=0.01, format="%.4f") / 100
-data_lib = st.date_input("🗓️ Data de Liberação", value=datetime(2025, 6, 25))
+taxa_max = st.number_input("📉 Taxa de Juros Contrato (% ao mês)", min_value=0.01, value=2.0, step=0.01, format="%.4f") / 100
+data_lib = st.date_input("🗓️ Data da Proposta", value=datetime(2025, 6, 25))
 data_venc1 = st.date_input("📅 Data do 1º Vencimento", value=datetime(2025, 9, 25))
 
+# Saldo devedor total estimado com base na parcela atual
 saldo_devedor_total = parcela_atual * prazo_inicial
-st.info(f"📘 Saldo Devedor Total Estimado (com base na parcela atual): **R$ {saldo_devedor_total:,.2f}**")
+st.info(f"📘 Saldo Devedor Total Estimado (com base na parcela atual): **R$ {saldo_devedor_total:,.2f}**".replace(',', 'v').replace('.', ',').replace('v', '.'))
 
+# Função de cálculo
 def calcula_pmt(i, saldo, datas, data_lib):
     fator = sum(1 / (1 + i) ** ((d - data_lib).days / 30) for d in datas)
     return saldo / fator
 
-if st.button("🔍 Calcular Cenários Viáveis"):
+# Lógica principal
+if st.button("🔍 Calcular Melhor Taxa e Prazo"):
+    melhor_total = 0
+    melhor_resultado = None
     taxa_limite = taxa_max - 0.0001
-    cenarios_viaveis = []
 
     for prazo in range(1, 97):
         datas = [data_venc1 + relativedelta(months=i) for i in range(prazo)]
@@ -49,19 +54,22 @@ if st.button("🔍 Calcular Cenários Viáveis"):
         if taxa is not None:
             pmt = calcula_pmt(taxa, saldo, datas, data_lib)
             total_pago = pmt * prazo
-            if total_pago <= saldo_devedor_total:
-                cenarios_viaveis.append({
-                    "Prazo (meses)": prazo,
-                    "Parcela (R$)": round(pmt, 2),
-                    "Taxa (% a.m.)": round(taxa * 100, 5),
-                    "Total Pago (R$)": round(total_pago, 2)
-                })
+            if total_pago <= saldo_devedor_total and total_pago > melhor_total:
+                melhor_total = total_pago
+                melhor_resultado = {
+                    "prazo": prazo,
+                    "taxa": taxa,
+                    "pmt": pmt,
+                    "total_pago": total_pago
+                }
 
-    if cenarios_viaveis:
-        st.success(f"✅ {len(cenarios_viaveis)} cenários viáveis encontrados.")
-        import pandas as pd
-        df = pd.DataFrame(cenarios_viaveis)
-        st.dataframe(df, use_container_width=True)
+    if melhor_resultado:
+        st.success("✅ Melhor Resultado Encontrado:")
+        st.info(f"📅 Prazo: **{melhor_resultado['prazo']} meses**")
+        st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:,.2f}**".replace(',', 'v').replace('.', ',').replace('v', '.'))
+        st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.4f}% ao mês**")
+        st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:,.2f}**".replace(',', 'v').replace('.', ',').replace('v', '.'))
     else:
         st.error("❌ Nenhuma combinação encontrada que respeite os limites definidos.")
+
 
