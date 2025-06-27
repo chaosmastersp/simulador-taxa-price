@@ -80,7 +80,11 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             pmt_alt = saldo / fator
             total_teste = pmt_alt * novo_prazo
             erro = total_teste - saldo_devedor_total
-            if abs(erro) <= 1.00 and total_teste <= saldo_devedor_total:
+            if (
+                abs(erro) <= 1.00
+                and total_teste <= saldo_devedor_total
+                and pmt_alt <= pmt_alvo
+            ):
                 encontrou_cenario2 = True
                 break
             fator2 = sum(1 / (1 + taxa_alt + 0.00001) ** ((d - data_lib).days / 30) for d in datas_alt)
@@ -117,7 +121,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             st.info(f"📦 Total Pago: **R$ {total_teste:.2f}**")
             break
     else:
-        st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago igual ou inferior ao saldo estimado.")
+        st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago igual ou inferior ao saldo estimado e parcela menor ou igual à desejada.")
 
 
 
