@@ -96,7 +96,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
         if encontrou_cenario2:
             pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
-            if pmt_final <= pmt_alvo and total_final <= saldo_devedor_total:
+            if pmt_final <= pmt_alvo and (saldo_devedor_total - total_final) <= 1.00:
                 pmt_final = round(pmt_final, 2)
                 total_final = round(total_final, 2)
 
