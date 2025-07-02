@@ -87,7 +87,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                     }
     
     if melhor_resultado_pmt_alvo:
-        st.success("✅ Cenário 1: Melhor Resultado (Parcela próxima da desejada, com a menor diferença absoluta ao Saldo Estimado):")
+        st.success("✅ Cenário 1: Proxmidade (Parcela próxima da desejada, com a menor diferença absoluta ao Saldo Estimado):")
         st.info(f"📅 Prazo: **{melhor_resultado_pmt_alvo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_pmt_alvo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado_pmt_alvo['taxa'] * 100:.4f}% ao mês**")
