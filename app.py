@@ -1,4 +1,3 @@
-
 import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -10,11 +9,11 @@ if senha != "simulador2025":
     st.stop()
 
 st.set_page_config(page_title="Simulador de Taxa - Tabela Price", layout="centered")
-st.title("📊 Simulador de Taxa para Parcela Desejada")
+st.title("📊 Simulador de Taxa para Parcela Deseada")
 
 # Entradas do usuário
 saldo = st.number_input("💰 Valor do Saldo Devedor (R$)", min_value=0.0, value=0.0, step=100.0, format="%.2f")
-pmt_alvo = st.number_input("📦 Valor da Parcela Desejada (R$)", min_value=0.01, value=0.01, step=10.0, format="%.2f")
+pmt_alvo = st.number_input("📦 Valor da Parcela Deseada (R$)", min_value=0.01, value=0.01, step=10.0, format="%.2f")
 parcela_atual = st.number_input("💳 Parcela Atual (R$)", min_value=0.01, value=100.0, step=10.0, format="%.2f")
 prazo_inicial = st.number_input("📆 Prazo (nº de parcelas)", min_value=1, max_value=96, value=1)
 taxa_max = st.number_input("📉 Taxa de Juros Máxima Permitida (% ao mês)", min_value=0.01, value=2.0, step=0.01, format="%.4f") / 100
@@ -64,11 +63,14 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 }
 
     if melhor_resultado:
+        diferenca_total_pago = melhor_resultado['total_pago'] - saldo_devedor_total
         st.success("✅ Melhor Resultado Encontrado:")
         st.info(f"📅 Prazo: **{melhor_resultado['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.4f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.info(f"↔️ Diferença (Total Pago - Saldo Estimado): **R$ {diferenca_total_pago:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+
 
     # Sempre calcular e exibir o cenário 2 com validação precisa da taxa e parcela
     encontrou_cenario2 = False
@@ -99,10 +101,12 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             pmt_final = round(pmt_final, 2)
             total_final = round(total_final, 2)
 
+            diferenca_total_pago_cenario2 = total_final - saldo_devedor_total
             
             pmt_formatada = f"R$ {pmt_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             total_formatado = f"R$ {total_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             taxa_formatada = f"{taxa_real * 100:.4f}%"
+            diferenca_formatada = f"R$ {diferenca_total_pago_cenario2:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
             st.markdown("---")
             st.success("📌 Cenário Alternativo Encontrado:")
@@ -110,6 +114,8 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             st.info(f"💰 Parcela: **{pmt_formatada}**")
             st.info(f"📉 Taxa de Juros: **{taxa_formatada} ao mês**")
             st.info(f"📦 Total Pago: **{total_formatado}**")
+            st.info(f"↔️ Diferença (Total Pago - Saldo Estimado): **{diferenca_formatada}**")
+
             break
 
     else:
