@@ -1,3 +1,4 @@
+
 import streamlit as st
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -59,6 +60,7 @@ if st.button("🔍 Calcular Cenários"):
                         "total_pago": round(total_mid, 2),
                         "diferenca": round(total_mid - total_original, 2)
                     }
+                st.write('✅ Cenário 2 identificado:', melhor_cenario2)
                 break
             elif pmt_mid > pmt_alvo:
                 low = mid
@@ -76,3 +78,4 @@ if st.button("🔍 Calcular Cenários"):
 
     if not melhor_cenario2:
         st.warning("⚠️ Cenário 2: Nenhum cenário viável dentro dos critérios estabelecidos.")
+
