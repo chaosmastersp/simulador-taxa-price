@@ -16,7 +16,7 @@ saldo = st.number_input("💰 Valor do Saldo Devedor (R$)", min_value=0.0, value
 pmt_alvo = st.number_input("📦 Valor da Parcela Desejada (R$)", min_value=0.01, value=0.01, step=10.0, format="%.2f")
 parcela_atual = st.number_input("💳 Parcela Atual (R$)", min_value=0.01, value=100.0, step=10.0, format="%.2f")
 prazo_inicial = st.number_input("📆 Prazo (nº de parcelas)", min_value=1, max_value=96, value=1)
-# Ensure taxa_max input correctly captures 4 decimal places and is then divided by 100 for internal calculation
+# --- CRITICAL CHANGE HERE: step is now 0.0001 to allow 4 decimal places input ---
 taxa_max = st.number_input("📉 Taxa de Juros Máxima Permitida (% ao mês)", min_value=0.01, value=2.0, step=0.0001, format="%.4f") / 100
 data_lib = st.date_input("🗓️ Data de Liberação", value=datetime(2025, 6, 25))
 data_venc1 = st.date_input("📅 Data do 1º Vencimento", value=datetime(2025, 9, 25))
