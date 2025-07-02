@@ -52,19 +52,19 @@ if st.button("🔍 Calcular Cenários"):
             pmt_mid = calcula_pmt(mid, saldo, datas, data_lib)
             total_mid = pmt_mid * prazo
             if (pmt_alvo - pmt_mid) <= 0.02 and pmt_mid <= pmt_alvo and total_mid <= total_original + 0.01:
-            if not melhor_cenario2 or abs(total_mid - total_original) < abs(melhor_cenario2['total_pago'] - total_original):
-            melhor_cenario2 = {
+                if not melhor_cenario2 or abs(total_mid - total_original) < abs(melhor_cenario2['total_pago'] - total_original):
+                    melhor_cenario2 = {
                         "prazo": prazo,
                         "taxa": round(mid, 5),
                         "pmt": round(pmt_mid, 2),
                         "total_pago": round(total_mid, 2),
                         "diferenca": round(total_mid - total_original, 2)
                     }
-            break
-            if pmt_mid > pmt_alvo:
-            low = mid
+                break
+            elif pmt_mid > pmt_alvo:
+                low = mid
             else:
-            high = mid
+                high = mid
 
     if melhor_cenario2:
         st.markdown("---")
@@ -75,6 +75,5 @@ if st.button("🔍 Calcular Cenários"):
         st.info(f"📦 Total Pago: **R$ {melhor_cenario2['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"↔️ Diferença para Total Original: **R$ {melhor_cenario2['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
 
-            elif not melhor_cenario2:
+    if not melhor_cenario2:
         st.warning("⚠️ Cenário 2: Nenhum cenário viável dentro dos critérios estabelecidos.")
-
