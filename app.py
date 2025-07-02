@@ -115,4 +115,3 @@ else:
     st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
 
 
-
