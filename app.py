@@ -16,7 +16,8 @@ saldo = st.number_input("💰 Valor do Saldo Devedor (R$)", min_value=0.0, value
 pmt_alvo = st.number_input("📦 Valor da Parcela Desejada (R$)", min_value=0.01, value=0.01, step=10.0, format="%.2f")
 parcela_atual = st.number_input("💳 Parcela Atual (R$)", min_value=0.01, value=100.0, step=10.0, format="%.2f")
 prazo_inicial = st.number_input("📆 Prazo (nº de parcelas)", min_value=1, max_value=96, value=1)
-taxa_max = st.number_input("📉 Taxa de Juros Máxima Permitida (% ao mês)", min_value=0.01, value=2.0, step=0.01, format="%.4f") / 100
+# Ensure taxa_max input correctly captures 4 decimal places and is then divided by 100 for internal calculation
+taxa_max = st.number_input("📉 Taxa de Juros Máxima Permitida (% ao mês)", min_value=0.01, value=2.0, step=0.0001, format="%.4f") / 100
 data_lib = st.date_input("🗓️ Data de Liberação", value=datetime(2025, 6, 25))
 data_venc1 = st.date_input("📅 Data do 1º Vencimento", value=datetime(2025, 9, 25))
 
@@ -87,10 +88,10 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                     }
     
     if melhor_resultado_pmt_alvo:
-        st.success("✅ Cenário 1: Proxmidade (Parcela próxima da desejada, com a menor diferença absoluta ao Saldo Estimado):")
+        st.success("✅ Cenário 1: Melhor Resultado (Parcela próxima da desejada, com a menor diferença absoluta ao Saldo Estimado):")
         st.info(f"📅 Prazo: **{melhor_resultado_pmt_alvo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_pmt_alvo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.info(f"📉 Taxa de Juros: **{melhor_resultado_pmt_alvo['taxa'] * 100:.4f}% ao mês**")
+        st.info(f"📉 Taxa de Juros: **{melhor_resultado_pmt_alvo['taxa'] * 100:.4f}% ao mês**") # Changed to .4f
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_pmt_alvo['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_pmt_alvo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
@@ -154,14 +155,14 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                     }
     
     if melhor_resultado_total_pago_proximo:
-        st.success("📌 Cenário 2: Alternativo (Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) entre 0,00 e 50,00):")
+        st.success("📌 Cenário 2: Alternativo (Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00):")
         st.info(f"📅 Prazo: **{melhor_resultado_total_pago_proximo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_total_pago_proximo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.info(f"📉 Taxa de Juros: **{melhor_resultado_total_pago_proximo['taxa'] * 100:.4f}% ao mês**")
+        st.info(f"📉 Taxa de Juros: **{melhor_resultado_total_pago_proximo['taxa'] * 100:.4f}% ao mês**") # Changed to .4f
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_total_pago_proximo['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_total_pago_proximo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
-        st.warning("⚠️ Cenário 2: Não foi possível encontrar um cenário alternativo com total pago não maior que o saldo estimado e diferença (Saldo - Total) entre 0,00 e 50,00.")
+        st.warning("⚠️ Cenário 2: Não foi possível encontrar um cenário alternativo com total pago não maior que o saldo estimado e diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00.")
 
     st.markdown("---") # Separador para clareza
 
@@ -219,7 +220,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
         st.success("🔵 Cenário 3: Alternativo (Total Pago pode ser até R$ 5,00 MAIOR que Saldo Estimado, Parcela Aceitável):")
         st.info(f"📅 Prazo: **{melhor_resultado_total_pago_maior['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_total_pago_maior['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.info(f"📉 Taxa de Juros: **{melhor_resultado_total_pago_maior['taxa'] * 100:.4f}% ao mês**")
+        st.info(f"📉 Taxa de Juros: **{melhor_resultado_total_pago_maior['taxa'] * 100:.4f}% ao mês**") # Changed to .4f
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_total_pago_maior['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_total_pago_maior['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
