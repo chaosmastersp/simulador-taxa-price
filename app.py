@@ -42,10 +42,9 @@ def get_pmt_and_total(taxa, saldo, datas, data_lib):
 
 # Lógica principal
 if st.button("🔍 Calcular Melhor Taxa e Prazo"):
-    # Scenario 1: Best result primarily targeting PMT_ALVO, and total_pago <= saldo_devedor_total,
-    # with a difference (Saldo Estimado - Total Pago) between 0 and 50.00
+    # Scenario 1: Best result primarily targeting PMT_ALVO, and finding the smallest absolute difference to Saldo Estimado
     melhor_resultado_pmt_alvo = None
-    melhor_diferenca_pmt_alvo = float('-inf') # Maximize difference (Saldo - Total) up to 50.00
+    melhor_diferenca_pmt_alvo = float('inf') # Now minimizing absolute difference
 
     for prazo in range(1, 97):
         datas = [data_venc1 + relativedelta(months=i) for i in range(prazo)]
@@ -71,35 +70,35 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             taxa_final = round(taxa_encontrada_pmt_alvo, 4)
             pmt_calc, total_pago_calc = get_pmt_and_total(taxa_final, saldo, datas, data_lib)
 
-            diferenca = saldo_devedor_total - total_pago_calc # This should be positive
+            diferenca = saldo_devedor_total - total_pago_calc # This is the actual difference
+            current_abs_diferenca = abs(diferenca) # Absolute difference for comparison
             
-            if (pmt_calc <= pmt_alvo + 0.01 and 
-                total_pago_calc <= saldo_devedor_total + 0.01 and # Allow very small tolerance for calculation
-                diferenca >= 0 and diferenca <= 50.00): 
-
-                if diferenca > melhor_diferenca_pmt_alvo:
-                    melhor_diferenca_pmt_alvo = diferenca
+            # Condition: pmt_calc close to pmt_alvo
+            if pmt_calc <= pmt_alvo + 0.01:
+                # Find the result with the smallest absolute difference
+                if current_abs_diferenca < melhor_diferenca_pmt_alvo:
+                    melhor_diferenca_pmt_alvo = current_abs_diferenca
                     melhor_resultado_pmt_alvo = {
                         "prazo": prazo,
                         "taxa": taxa_final,
                         "pmt": pmt_calc,
                         "total_pago": total_pago_calc,
-                        "diferenca": diferenca 
+                        "diferenca": diferenca # Store actual difference for display (can be positive or negative)
                     }
     
     if melhor_resultado_pmt_alvo:
-        st.success("✅ Cenário 1: Melhor Resultado (Parcela próxima da desejada, Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00):")
+        st.success("✅ Cenário 1: Melhor Resultado (Parcela próxima da desejada, com a menor diferença absoluta ao Saldo Estimado):")
         st.info(f"📅 Prazo: **{melhor_resultado_pmt_alvo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_pmt_alvo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado_pmt_alvo['taxa'] * 100:.4f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_pmt_alvo['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_pmt_alvo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
-        st.warning("⚠️ Cenário 1: Não foi possível encontrar um resultado com parcela desejada, total pago não maior que o saldo estimado, e diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00.")
+        st.warning("⚠️ Cenário 1: Não foi possível encontrar um resultado com parcela desejada e a menor diferença absoluta ao saldo estimado.")
 
     st.markdown("---") # Separador para clareza
 
-    # Scenario 2: Alternative scenario - Total paid as close as possible to estimated balance (not exceeding it)
+    # Scenario 2: Total paid as close as possible to estimated balance (not exceeding it)
     # with a difference (Saldo Estimado - Total Pago) between 0 and 50.00, respecting pmt_alvo
     melhor_resultado_total_pago_proximo = None
     melhor_diferenca_total_pago_proximo = float('-inf') # Maximize difference (Saldo - Total) up to 50.00
@@ -181,9 +180,6 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             
             pmt_mid_alt, total_mid_alt = get_pmt_and_total(mid_taxa_alt, saldo, datas_alt, data_lib)
             
-            # The key condition here: total_mid_alt can be up to 5.00 greater than saldo_devedor_total
-            # This means saldo_devedor_total - total_mid_alt can be between -5.00 and 50.00 (from Scenario 2's upper limit)
-            
             if (pmt_mid_alt <= pmt_alvo + 0.01 and # PMT must be acceptable
                 total_mid_alt >= saldo_devedor_total - 50.00 and # Total paid not too low
                 total_mid_alt <= saldo_devedor_total + 5.00): # Total paid not more than 5.00 higher
@@ -191,7 +187,6 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 taxa_encontrada_total_pago_maior = mid_taxa_alt
                 break
             
-            # Adjust search range
             elif total_mid_alt > saldo_devedor_total + 5.00: # If total is too high, decrease rate
                 high_taxa_alt = mid_taxa_alt
             else: # If total is too low (or within range but PMT is too high), increase rate
@@ -204,12 +199,10 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             
             diferenca_alt_maior = saldo_devedor_total - total_final_alt_maior 
             
-            # Final check with rounded values
             if (pmt_final_alt_maior <= pmt_alvo + 0.01 and 
                 total_final_alt_maior >= saldo_devedor_total - 50.00 and
                 total_final_alt_maior <= saldo_devedor_total + 5.00):
                 
-                # We want the result that has the smallest absolute difference within this new range
                 current_abs_diferenca_maior = abs(diferenca_alt_maior)
 
                 if current_abs_diferenca_maior < melhor_diferenca_total_pago_maior:
