@@ -46,7 +46,7 @@ if st.button("🔍 Calcular Cenários"):
     for prazo in range(1, 97):
         st.write(f'🔍 Testando prazo: {prazo}')
         datas = [data_venc1 + relativedelta(months=i) for i in range(prazo)]
-            low, high = 0.001, taxa_max - 0.001
+    low, high = 0.001, taxa_max - 0.001
         for _ in range(100):
             mid = (low + high) / 2
             pmt_mid = calcula_pmt(mid, saldo, datas, data_lib)
