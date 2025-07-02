@@ -79,30 +79,30 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
         return pmt, pmt * len(datas)
 
     for novo_prazo in range(1, 97):
-        datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
-        low, high = 0.0001, taxa_max
-        for _ in range(100):
-            mid = (low + high) / 2
-            pmt_mid, total_mid = total_pago_por_taxa(mid, saldo, datas_alt, data_lib)
-            if abs(total_mid - saldo_devedor_total) <= 1.00 and pmt_mid <= pmt_alvo:
-                encontrou_cenario2 = True
-                taxa_real = round(mid, 4)
-                break
-            if total_mid > saldo_devedor_total or pmt_mid > pmt_alvo:
-                high = mid
-            else:
-                low = mid
+    datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
+    low, high = 0.0001, taxa_max
+    encontrou_cenario2 = False
+    for _ in range(100):
+        mid = (low + high) / 2
+        pmt_mid, total_mid = total_pago_por_taxa(mid, saldo, datas_alt, data_lib)
+        if abs(total_mid - saldo_devedor_total) <= 1.00 and pmt_mid <= pmt_alvo:
+            encontrou_cenario2 = True
+            taxa_real = round(mid, 4)
+            break
+        if total_mid > saldo_devedor_total or pmt_mid > pmt_alvo:
+            high = mid
+        else:
+            low = mid
 
-        
-            pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
-            taxa_real = round(taxa_real, 5)
+    if encontrou_cenario2:
+        pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
+        if pmt_final <= pmt_alvo:
             pmt_final = round(pmt_final, 2)
             total_final = round(total_final, 2)
 
-            
             pmt_formatada = f"R$ {pmt_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             total_formatado = f"R$ {total_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            taxa_formatada = f"{taxa_real * 100:.4f}%"
+            taxa_formatada = f"{taxa_real * 100:.2f}%"
 
             st.markdown("---")
             st.success("📌 Cenário Alternativo Encontrado:")
@@ -111,9 +111,8 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             st.info(f"📉 Taxa de Juros: **{taxa_formatada} ao mês**")
             st.info(f"📦 Total Pago: **{total_formatado}**")
             break
-
-    else:
-        st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
+else:
+    st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
 
 
 
