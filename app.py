@@ -93,7 +93,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             else:
                 low = mid
 
-        if encontrou_cenario2:
+        if encontrou_cenario2 and pmt_final <= pmt_alvo:
             pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
             taxa_real = round(taxa_real, 5)
             pmt_final = round(pmt_final, 2)
@@ -114,6 +114,5 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
     else:
         st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
-
 
 
