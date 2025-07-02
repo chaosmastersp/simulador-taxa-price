@@ -50,7 +50,7 @@ if st.button("🔍 Calcular Cenários"):
             mid = (low + high) / 2
             pmt_mid = calcula_pmt(mid, saldo, datas, data_lib)
             total_mid = pmt_mid * prazo
-            if (pmt_alvo - pmt_mid) <= 0.02 and pmt_mid <= pmt_alvo and total_mid <= total_original + 0.01:
+            if 0 <= (pmt_alvo - pmt_mid) <= 0.05 and total_mid <= total_original + 0.01:
                 if not melhor_cenario2 or abs(total_mid - total_original) < abs(melhor_cenario2['total_pago'] - total_original):
                     melhor_cenario2 = {
                         "prazo": prazo,
