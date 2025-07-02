@@ -51,6 +51,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 break
 
         if taxa is not None:
+            taxa = round(taxa, 4)
             pmt = calcula_pmt(taxa, saldo, datas, data_lib)
             total_pago = pmt * prazo
             if total_pago <= saldo_devedor_total and total_pago > melhor_total:
@@ -85,7 +86,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             pmt_mid, total_mid = total_pago_por_taxa(mid, saldo, datas_alt, data_lib)
             if abs(total_mid - saldo_devedor_total) <= 1.00 and pmt_mid <= pmt_alvo:
                 encontrou_cenario2 = True
-                taxa_real = mid
+                taxa_real = round(mid, 4)
                 break
             if total_mid > saldo_devedor_total or pmt_mid > pmt_alvo:
                 high = mid
