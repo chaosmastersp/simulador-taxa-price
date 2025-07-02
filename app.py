@@ -96,8 +96,8 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
         if encontrou_cenario2:
             pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
-            if pmt_final <= pmt_alvo and total_final <= saldo_devedor_total and total_final >= (saldo_devedor_total - 5.00):
-                st.write(f"🧪 Testando cenário: Prazo={novo_prazo}, Parcela=R$ {pmt_final:.2f}, Total Pago=R$ {total_final:.2f}, Saldo Estimado=R$ {saldo_devedor_total:.2f}")
+            if pmt_final <= pmt_alvo and total_final <= saldo_devedor_total and total_final >= (saldo_devedor_total - 20.00):
+                st.write(f"🧪 Testando cenário (até R$20 de diferença): Prazo={novo_prazo}, Parcela=R$ {pmt_final:.2f}, Total Pago=R$ {total_final:.2f}, Saldo Estimado=R$ {saldo_devedor_total:.2f}")
                 pmt_final = round(pmt_final, 2)
                 total_final = round(total_final, 2)
 
@@ -114,5 +114,6 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 break
 else:
     st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
+
 
 
