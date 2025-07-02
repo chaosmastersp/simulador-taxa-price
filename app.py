@@ -69,6 +69,9 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
         st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.4f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+    else:
+        st.warning("⚠️ Não foi possível encontrar a melhor taxa e prazo para os critérios informados.")
+
 
     # Sempre calcular e exibir o cenário 2 com validação precisa da taxa e parcela
     encontrou_cenario2 = False
@@ -97,7 +100,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
         if encontrou_cenario2:
             pmt_final, total_final = total_pago_por_taxa(taxa_real, saldo, datas_alt, data_lib)
             if pmt_final <= pmt_alvo and total_final <= saldo_devedor_total and total_final >= (saldo_devedor_total - 50.00):
-                                pmt_final = round(pmt_final, 2)
+                pmt_final = round(pmt_final, 2)
                 total_final = round(total_final, 2)
 
                 pmt_formatada = f"R$ {pmt_final:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -111,7 +114,6 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 st.info(f"📉 Taxa de Juros: **{taxa_formatada} ao mês**")
                 st.info(f"📦 Total Pago: **{total_formatado}**")
                 break
-else:
-    st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
-
+    else: # This 'else' belongs to the 'for novo_prazo' loop, meaning if no break occurred
+        st.warning("⚠️ Não foi possível calcular um cenário alternativo com total pago ≤ saldo estimado e parcela ≤ desejada.")
 
