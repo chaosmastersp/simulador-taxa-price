@@ -154,14 +154,14 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                     }
     
     if melhor_resultado_total_pago_proximo:
-        st.success("📌 Cenário 2: Alternativo (Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00):")
+        st.success("📌 Cenário 2: Alternativo (Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) entre 0,00 e 50,00):")
         st.info(f"📅 Prazo: **{melhor_resultado_total_pago_proximo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_total_pago_proximo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado_total_pago_proximo['taxa'] * 100:.4f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_total_pago_proximo['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_total_pago_proximo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
-        st.warning("⚠️ Cenário 2: Não foi possível encontrar um cenário alternativo com total pago não maior que o saldo estimado e diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00.")
+        st.warning("⚠️ Cenário 2: Não foi possível encontrar um cenário alternativo com total pago não maior que o saldo estimado e diferença (Saldo - Total) entre 0,00 e 50,00.")
 
     st.markdown("---") # Separador para clareza
 
