@@ -64,7 +64,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
     if melhor_resultado:
         diferenca_total_pago = melhor_resultado['total_pago'] - saldo_devedor_total
-        st.success("✅ Melhor Resultado Encontrado:")
+        st.success("✅ Cenário 1 - Melhor uso da margem:")
         st.info(f"📅 Prazo: **{melhor_resultado['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado['taxa'] * 100:.4f}% ao mês**")
