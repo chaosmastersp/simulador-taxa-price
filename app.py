@@ -16,7 +16,7 @@ saldo = st.number_input("💰 Valor do Saldo Devedor (R$)", min_value=0.0, value
 pmt_alvo = st.number_input("📦 Valor da Parcela Desejada (R$)", min_value=0.01, value=0.01, step=10.0, format="%.2f")
 parcela_atual = st.number_input("💳 Parcela Atual (R$)", min_value=0.01, value=100.0, step=10.0, format="%.2f")
 prazo_inicial = st.number_input("📆 Prazo (nº de parcelas)", min_value=1, max_value=96, value=1)
-# --- CRITICAL CHANGE HERE: step is now 0.0001 to allow 4 decimal places input ---
+# Corrected: step is 0.0001 to allow 4 decimal places for input
 taxa_max = st.number_input("📉 Taxa de Juros Máxima Permitida (% ao mês)", min_value=0.01, value=2.0, step=0.0001, format="%.4f") / 100
 data_lib = st.date_input("🗓️ Data de Liberação", value=datetime(2025, 6, 25))
 data_venc1 = st.date_input("📅 Data do 1º Vencimento", value=datetime(2025, 9, 25))
@@ -50,16 +50,23 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
     for prazo in range(1, 97):
         datas = [data_venc1 + relativedelta(months=i) for i in range(prazo)]
         
-        low_taxa, high_taxa = 0.0001, taxa_max
+        low_taxa, high_taxa = 0.000001, taxa_max # Start with a very low non-zero rate for bisection
         taxa_encontrada_pmt_alvo = None
         
-        for _ in range(100):
+        # Using bisection method for robustness and better precision control
+        for _ in range(100): # 100 iterations should provide sufficient precision
             mid_taxa = (low_taxa + high_taxa) / 2
-            if mid_taxa <= 0: mid_taxa = 0.0001
             
+            # Avoid division by zero or very small numbers
+            if mid_taxa <= 0: 
+                low_taxa = 0.000001 # Nudge it positively
+                continue
+
             current_pmt = calcula_pmt(mid_taxa, saldo, datas, data_lib)
             
-            if abs(current_pmt - pmt_alvo) < 0.01:
+            # Increased tolerance for PMT to allow for a range around pmt_alvo
+            # The actual rate will be rounded to 4 decimals for presentation
+            if abs(current_pmt - pmt_alvo) < 0.00001: # Tighter tolerance for finding the rate
                 taxa_encontrada_pmt_alvo = mid_taxa
                 break
             elif current_pmt > pmt_alvo:
@@ -68,15 +75,13 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                 low_taxa = mid_taxa
                 
         if taxa_encontrada_pmt_alvo is not None:
-            taxa_final = round(taxa_encontrada_pmt_alvo, 4) # Rate calculated and rounded to 4 decimals
+            taxa_final = round(taxa_encontrada_pmt_alvo, 6) # Round to 6 for internal precision, then to 4 for display
             pmt_calc, total_pago_calc = get_pmt_and_total(taxa_final, saldo, datas, data_lib)
 
-            diferenca = saldo_devedor_total - total_pago_calc # This is the actual difference
-            current_abs_diferenca = abs(diferenca) # Absolute difference for comparison
+            diferenca = saldo_devedor_total - total_pago_calc 
+            current_abs_diferenca = abs(diferenca) 
             
-            # Condition: pmt_calc close to pmt_alvo
-            if pmt_calc <= pmt_alvo + 0.01:
-                # Find the result with the smallest absolute difference
+            if pmt_calc <= pmt_alvo + 0.01: # PMT must be acceptable
                 if current_abs_diferenca < melhor_diferenca_pmt_alvo:
                     melhor_diferenca_pmt_alvo = current_abs_diferenca
                     melhor_resultado_pmt_alvo = {
@@ -84,7 +89,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                         "taxa": taxa_final,
                         "pmt": pmt_calc,
                         "total_pago": total_pago_calc,
-                        "diferenca": diferenca # Store actual difference for display (can be positive or negative)
+                        "diferenca": diferenca 
                     }
     
     if melhor_resultado_pmt_alvo:
@@ -106,45 +111,46 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
     for novo_prazo in range(1, 97):
         datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
-        low_taxa_alt, high_taxa_alt = 0.0001, taxa_max
+        low_taxa_alt, high_taxa_alt = 0.000001, taxa_max
         taxa_encontrada_total_pago = None
         
         for _ in range(100):
             mid_taxa_alt = (low_taxa_alt + high_taxa_alt) / 2
-            if mid_taxa_alt <= 0: mid_taxa_alt = 0.0001
+            if mid_taxa_alt <= 0: 
+                low_taxa_alt = 0.000001
+                continue
             
             pmt_mid_alt, total_mid_alt = get_pmt_and_total(mid_taxa_alt, saldo, datas_alt, data_lib)
             
             current_diferenca_alt_candidate = saldo_devedor_total - total_mid_alt
 
-            if (total_mid_alt <= saldo_devedor_total + 0.01 and # Total Paid must be less than or equal to estimated balance (with tiny tolerance)
-                current_diferenca_alt_candidate >= 0 and current_diferenca_alt_candidate <= 50.00 and # Difference must be between 0 and 50.00
-                pmt_mid_alt <= pmt_alvo + 0.01): # PMT must be acceptable
-                
-                taxa_encontrada_total_pago = mid_taxa_alt
-                break 
-            
-            elif total_mid_alt < saldo_devedor_total - 50.00: 
-                low_taxa_alt = mid_taxa_alt
-            elif total_mid_alt > saldo_devedor_total + 0.01: # If it exceeds saldo_devedor_total, decrease rate
-                 high_taxa_alt = mid_taxa_alt
-            else: # total_mid_alt is within range but pmt_mid_alt is too high or other issues.
-                if pmt_mid_alt > pmt_alvo + 0.01:
+            # Check if current_diferenca_alt_candidate is within the desired range for scenario 2
+            if current_diferenca_alt_candidate >= 0 and current_diferenca_alt_candidate <= 50.00:
+                # Then check if pmt_mid_alt is acceptable
+                if pmt_mid_alt <= pmt_alvo + 0.01:
+                    taxa_encontrada_total_pago = mid_taxa_alt
+                    break 
+                elif pmt_mid_alt > pmt_alvo + 0.01: # If pmt is too high, decrease rate (to lower pmt)
                     high_taxa_alt = mid_taxa_alt
-                else:
+                else: # pmt is lower than target, try higher rate to get closer to target total
                     low_taxa_alt = mid_taxa_alt
+            elif current_diferenca_alt_candidate < 0: # Total Paid is too high, decrease rate
+                high_taxa_alt = mid_taxa_alt
+            else: # current_diferenca_alt_candidate > 50.00 (Total Paid is too low), increase rate
+                low_taxa_alt = mid_taxa_alt
+
 
         if taxa_encontrada_total_pago is not None:
-            taxa_final_alt = round(taxa_encontrada_total_pago, 4) # Rate calculated and rounded to 4 decimals
+            taxa_final_alt = round(taxa_encontrada_total_pago, 6) # Round to 6 for internal precision
             pmt_final_alt, total_final_alt = get_pmt_and_total(taxa_final_alt, saldo, datas_alt, data_lib)
             
             diferenca_alt = saldo_devedor_total - total_final_alt 
             
+            # Final check with rounded values and the specific range for Scenario 2
             if (pmt_final_alt <= pmt_alvo + 0.01 and 
-                total_final_alt <= saldo_devedor_total + 0.01 and # Final check for total_pago not exceeding saldo
                 diferenca_alt >= 0 and diferenca_alt <= 50.00):
                 
-                if diferenca_alt > melhor_diferenca_total_pago_proximo: 
+                if diferenca_alt > melhor_diferenca_total_pago_proximo: # Maximize difference (lesser total paid)
                     melhor_diferenca_total_pago_proximo = diferenca_alt
                     melhor_resultado_total_pago_proximo = {
                         "prazo": novo_prazo,
@@ -172,37 +178,43 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
 
     for novo_prazo in range(1, 97):
         datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
-        low_taxa_alt, high_taxa_alt = 0.0001, taxa_max
+        low_taxa_alt, high_taxa_alt = 0.000001, taxa_max
         taxa_encontrada_total_pago_maior = None
         
         for _ in range(100):
             mid_taxa_alt = (low_taxa_alt + high_taxa_alt) / 2
-            if mid_taxa_alt <= 0: mid_taxa_alt = 0.0001
+            if mid_taxa_alt <= 0: 
+                low_taxa_alt = 0.000001
+                continue
             
             pmt_mid_alt, total_mid_alt = get_pmt_and_total(mid_taxa_alt, saldo, datas_alt, data_lib)
             
-            if (pmt_mid_alt <= pmt_alvo + 0.01 and # PMT must be acceptable
-                total_mid_alt >= saldo_devedor_total - 50.00 and # Total paid not too low
-                total_mid_alt <= saldo_devedor_total + 5.00): # Total paid not more than 5.00 higher
-                
-                taxa_encontrada_total_pago_maior = mid_taxa_alt
-                break
-            
-            elif total_mid_alt > saldo_devedor_total + 5.00: # If total is too high, decrease rate
+            current_diferenca_alt_candidate = saldo_devedor_total - total_mid_alt
+
+            # Check if current_diferenca_alt_candidate is within the new wider range for scenario 3
+            if current_diferenca_alt_candidate >= -5.00 and current_diferenca_alt_candidate <= 50.00:
+                if pmt_mid_alt <= pmt_alvo + 0.01:
+                    taxa_encontrada_total_pago_maior = mid_taxa_alt
+                    break
+                elif pmt_mid_alt > pmt_alvo + 0.01:
+                    high_taxa_alt = mid_taxa_alt
+                else:
+                    low_taxa_alt = mid_taxa_alt
+            elif current_diferenca_alt_candidate < -5.00: # Total Paid is too high, decrease rate
                 high_taxa_alt = mid_taxa_alt
-            else: # If total is too low (or within range but PMT is too high), increase rate
+            else: # current_diferenca_alt_candidate > 50.00 (Total Paid is too low), increase rate
                 low_taxa_alt = mid_taxa_alt
                 
 
         if taxa_encontrada_total_pago_maior is not None:
-            taxa_final_alt_maior = round(taxa_encontrada_total_pago_maior, 4) # Rate calculated and rounded to 4 decimals
+            taxa_final_alt_maior = round(taxa_encontrada_total_pago_maior, 6) # Round to 6 for internal precision
             pmt_final_alt_maior, total_final_alt_maior = get_pmt_and_total(taxa_final_alt_maior, saldo, datas_alt, data_lib)
             
             diferenca_alt_maior = saldo_devedor_total - total_final_alt_maior 
             
+            # Final check with rounded values and the specific range for Scenario 3
             if (pmt_final_alt_maior <= pmt_alvo + 0.01 and 
-                total_final_alt_maior >= saldo_devedor_total - 50.00 and
-                total_final_alt_maior <= saldo_devedor_total + 5.00):
+                diferenca_alt_maior >= -5.00 and diferenca_alt_maior <= 50.00):
                 
                 current_abs_diferenca_maior = abs(diferenca_alt_maior)
 
@@ -213,7 +225,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
                         "taxa": taxa_final_alt_maior,
                         "pmt": pmt_final_alt_maior,
                         "total_pago": total_final_alt_maior,
-                        "diferenca": diferenca_alt_maior # Store actual difference (can be negative)
+                        "diferenca": diferenca_alt_maior 
                     }
     
     if melhor_resultado_total_pago_maior:
