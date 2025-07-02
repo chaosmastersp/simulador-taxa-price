@@ -42,11 +42,10 @@ def get_pmt_and_total(taxa, saldo, datas, data_lib):
 
 # Lógica principal
 if st.button("🔍 Calcular Melhor Taxa e Prazo"):
-    # Scenario 1: Best result primarily targeting PMT_ALVO, and total_pago should be within the acceptable difference
+    # Scenario 1: Best result primarily targeting PMT_ALVO, and total_pago <= saldo_devedor_total,
+    # with a difference (Saldo Estimado - Total Pago) between 0 and 50.00
     melhor_resultado_pmt_alvo = None
-    melhor_diferenca_pmt_alvo = float('inf') 
-    
-    taxa_limite = taxa_max
+    melhor_diferenca_pmt_alvo = float('-inf') # Maximize difference (Saldo - Total) up to 50.00
 
     for prazo in range(1, 97):
         datas = [data_venc1 + relativedelta(months=i) for i in range(prazo)]
@@ -72,47 +71,40 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             taxa_final = round(taxa_encontrada_pmt_alvo, 4)
             pmt_calc, total_pago_calc = get_pmt_and_total(taxa_final, saldo, datas, data_lib)
 
-            diferenca = saldo_devedor_total - total_pago_calc # Calculate difference as Saldo - Total Pago
+            diferenca = saldo_devedor_total - total_pago_calc # This should be positive
             
-            # Applying the new limit: diferenca (Saldo Estimado - Total Pago) must be >= -50.00 (i.e., total_pago <= saldo_devedor_total + 50.00)
-            # And also, total_pago should preferably be <= saldo_devedor_total, or only slightly above.
-            # Let's define the acceptable range for total_pago: [saldo_devedor_total - 50.00, saldo_devedor_total + 50.00]
-            
-            # The core goal for "melhor_resultado_pmt_alvo" is to find the best PMT match while keeping total_pago within a reasonable range
-            # and minimizing the absolute difference to saldo_devedor_total.
-            
+            # Conditions: pmt_calc close to pmt_alvo AND total_pago_calc <= saldo_devedor_total AND 0 <= diferenca <= 50.00
             if (pmt_calc <= pmt_alvo + 0.01 and 
-                total_pago_calc >= saldo_devedor_total - 50.00 and 
-                total_pago_calc <= saldo_devedor_total + 50.00):
-                
-                # We want the result with the smallest absolute difference within this range
-                current_abs_diferenca = abs(saldo_devedor_total - total_pago_calc)
-                
-                if current_abs_diferenca < melhor_diferenca_pmt_alvo:
-                    melhor_diferenca_pmt_alvo = current_abs_diferenca
+                total_pago_calc <= saldo_devedor_total and # Total Paid must be less than or equal to estimated balance
+                diferenca >= 0 and diferenca <= 50.00): # Difference must be between 0 and 50.00
+
+                # We want the highest difference (closer to 50.00), meaning lower total paid while staying within bounds
+                if diferenca > melhor_diferenca_pmt_alvo:
+                    melhor_diferenca_pmt_alvo = diferenca
                     melhor_resultado_pmt_alvo = {
                         "prazo": prazo,
                         "taxa": taxa_final,
                         "pmt": pmt_calc,
                         "total_pago": total_pago_calc,
-                        "diferenca": current_abs_diferenca # Store absolute difference for display
+                        "diferenca": diferenca 
                     }
     
     if melhor_resultado_pmt_alvo:
-        st.success("✅ Cenário 1: Melhor Resultado (Parcela próxima da desejada, Diferença absoluta <= R$ 50,00):")
+        st.success("✅ Cenário 1: Melhor Resultado (Parcela próxima da desejada, Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) <= R$ 50,00):")
         st.info(f"📅 Prazo: **{melhor_resultado_pmt_alvo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_pmt_alvo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado_pmt_alvo['taxa'] * 100:.4f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_pmt_alvo['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.info(f"↔️ Diferença Absoluta (Saldo Estimado - Total Pago): **R$ {melhor_resultado_pmt_alvo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_pmt_alvo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
-        st.warning("⚠️ Cenário 1: Não foi possível encontrar um resultado com parcela desejada e diferença absoluta menor ou igual a R$ 50,00.")
+        st.warning("⚠️ Cenário 1: Não foi possível encontrar um resultado com parcela desejada, total pago não maior que o saldo estimado, e diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00.")
 
     st.markdown("---") # Separador para clareza
 
-    # Scenario 2: Alternative scenario - Total paid as close as possible to estimated balance, respecting pmt_alvo
+    # Scenario 2: Alternative scenario - Total paid as close as possible to estimated balance (not exceeding it)
+    # with a difference (Saldo Estimado - Total Pago) between 0 and 50.00, respecting pmt_alvo
     melhor_resultado_total_pago_proximo = None
-    melhor_diferenca_total_pago_proximo = float('inf') # This will store the absolute difference for comparison
+    melhor_diferenca_total_pago_proximo = float('-inf') # Maximize difference (Saldo - Total) up to 50.00
 
     for novo_prazo in range(1, 97):
         datas_alt = [data_venc1 + relativedelta(months=i) for i in range(novo_prazo)]
@@ -125,58 +117,59 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             
             pmt_mid_alt, total_mid_alt = get_pmt_and_total(mid_taxa_alt, saldo, datas_alt, data_lib)
             
-            # The goal here is to get total_mid_alt within the +/- 50.00 range of saldo_devedor_total
-            # while also considering pmt_alvo.
+            # Prioritize total_mid_alt <= saldo_devedor_total, AND pmt_mid_alt <= pmt_alvo + tolerance
+            # Also, the difference (saldo - total) must be within 0 and 50.00
             
-            # Check if current total_mid_alt is within the acceptable range AND pmt is acceptable
-            if (total_mid_alt >= saldo_devedor_total - 50.00 and 
-                total_mid_alt <= saldo_devedor_total + 50.00 and
+            current_diferenca_alt_candidate = saldo_devedor_total - total_mid_alt
+
+            if (total_mid_alt <= saldo_devedor_total and # Total Paid must be less than or equal to estimated balance
+                current_diferenca_alt_candidate >= 0 and current_diferenca_alt_candidate <= 50.00 and # Difference must be between 0 and 50.00
                 pmt_mid_alt <= pmt_alvo + 0.01): # PMT must be acceptable
                 
                 taxa_encontrada_total_pago = mid_taxa_alt
                 break # Found a candidate within the range
-            
-            # Adjust search range based on total_mid_alt relative to the target range
-            elif total_mid_alt > saldo_devedor_total + 50.00: # Too high
-                high_taxa_alt = mid_taxa_alt
-            elif total_mid_alt < saldo_devedor_total - 50.00: # Too low
+
+            # Adjust search range based on total_mid_alt relative to the target total_pago range
+            # If total_mid_alt is too low (difference too high), increase rate
+            elif total_mid_alt < saldo_devedor_total - 50.00: 
                 low_taxa_alt = mid_taxa_alt
-            else: # total_mid_alt is within range but pmt_mid_alt is too high or other issues. Try to refine.
+            # If total_mid_alt is too high (difference negative), decrease rate
+            elif total_mid_alt > saldo_devedor_total: # If it exceeds saldo_devedor_total, decrease rate
+                 high_taxa_alt = mid_taxa_alt
+            else: # total_mid_alt is between saldo_devedor_total - 50 and saldo_devedor_total
+                  # but PMT might be too high. Or still trying to converge.
                 if pmt_mid_alt > pmt_alvo + 0.01:
                     high_taxa_alt = mid_taxa_alt
-                else: # pmt_mid_alt is fine but total_mid_alt is not exactly at the target, refine binary search
-                    # this branch is a bit trickier, could oscillate. Let's keep it simple for now, the break should catch it.
-                    if abs(total_mid_alt - saldo_devedor_total) < abs(low_taxa_alt - high_taxa_alt) * 1000: # Heuristic for convergence
-                        taxa_encontrada_total_pago = mid_taxa_alt
-                        break
+                else:
+                    low_taxa_alt = mid_taxa_alt # try to increase total_pago slightly (reduce diff) if pmt allows
 
         if taxa_encontrada_total_pago is not None:
             taxa_final_alt = round(taxa_encontrada_total_pago, 4)
             pmt_final_alt, total_final_alt = get_pmt_and_total(taxa_final_alt, saldo, datas_alt, data_lib)
             
-            current_abs_diferenca_alt = abs(saldo_devedor_total - total_final_alt)
-
+            diferenca_alt = saldo_devedor_total - total_final_alt # This should be positive
+            
             # Final check with rounded values: must meet criteria and be the best found so far
             if (pmt_final_alt <= pmt_alvo + 0.01 and 
-                total_final_alt >= saldo_devedor_total - 50.00 and 
-                total_final_alt <= saldo_devedor_total + 50.00):
+                total_final_alt <= saldo_devedor_total and # Total Paid must be less than or equal to estimated balance
+                diferenca_alt >= 0 and diferenca_alt <= 50.00):
                 
-                if current_abs_diferenca_alt < melhor_diferenca_total_pago_proximo:
-                    melhor_diferenca_total_pago_proximo = current_abs_diferenca_alt
+                if diferenca_alt > melhor_diferenca_total_pago_proximo: # Maximize difference (lesser total paid)
+                    melhor_diferenca_total_pago_proximo = diferenca_alt
                     melhor_resultado_total_pago_proximo = {
                         "prazo": novo_prazo,
                         "taxa": taxa_final_alt,
                         "pmt": pmt_final_alt,
                         "total_pago": total_final_alt,
-                        "diferenca": current_abs_diferenca_alt # Store absolute difference for display
+                        "diferenca": diferenca_alt 
                     }
     
     if melhor_resultado_total_pago_proximo:
-        st.success("📌 Cenário 2: Alternativo (Total Pago mais próximo do Saldo Estimado, Diferença absoluta <= R$ 50,00):")
+        st.success("📌 Cenário 2: Alternativo (Total Pago NÃO maior que Saldo Estimado, Diferença (Saldo - Total) <= R$ 50,00):")
         st.info(f"📅 Prazo: **{melhor_resultado_total_pago_proximo['prazo']} meses**")
         st.info(f"💰 Parcela: **R$ {melhor_resultado_total_pago_proximo['pmt']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
         st.info(f"📉 Taxa de Juros: **{melhor_resultado_total_pago_proximo['taxa'] * 100:.4f}% ao mês**")
         st.info(f"📦 Total Pago: **R$ {melhor_resultado_total_pago_proximo['total_pago']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.info(f"↔️ Diferença Absoluta (Saldo Estimado - Total Pago): **R$ {melhor_resultado_total_pago_proximo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.info(f"↔️ Diferença (Saldo Estimado - Total Pago): **R$ {melhor_resultado_total_pago_proximo['diferenca']:,.2f}**".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
-        st.warning("⚠️ Cenário 2: Não foi possível encontrar um cenário alternativo com total pago próximo ao saldo estimado e diferença absoluta menor ou igual a R$ 50,00.")
+        st.warning("⚠️ Cenário 2: Não foi possível encontrar um cenário alternativo com total pago não maior que o saldo estimado e diferença (Saldo - Total) entre R$ 0,00 e R$ 50,00.")
