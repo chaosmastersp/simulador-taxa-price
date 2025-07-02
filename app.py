@@ -134,7 +134,7 @@ if st.button("🔍 Calcular Melhor Taxa e Prazo"):
             diferenca_alt = abs(saldo_devedor_total - total_final_alt)
 
             # Applying the new limit: diferenca_alt <= 5.00
-            if pmt_final_alt <= pmt_alvo + 0.01 and diferenca_alt <= 5.00:
+            if pmt_final_alt <= pmt_alvo + 0.01 and diferenca_alt >= 1.00:
                 if diferenca_alt < melhor_diferenca_total_pago_proximo:
                     melhor_diferenca_total_pago_proximo = diferenca_alt
                     melhor_resultado_total_pago_proximo = {
